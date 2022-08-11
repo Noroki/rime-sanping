@@ -1,0 +1,461 @@
+# Rime schema
+# encoding: utf-8
+
+schema:
+  schema_id: sanping
+  name: 辰拼
+  version: "20200415"
+  author: 
+    - sgal <ayaka@mail.shn.hk>
+    - LeiMaau <leimaau@qq.com>
+    - chaaklau <chaakming@gmail.com>
+    - laubonghaudoi <laubonghaudoi@icloud.com>
+    - Over-There-Is <1918301767@qq.com>
+    - MrCorn0-0 <gary.deng@qq.com>
+    - Noroki <kokoromimin@gmail.com>
+
+  description: |
+    辰拼方案。
+    基於「jyut6ping3」聲調粵拼詞庫、重要參考「soengping」、「jyutsp」的粵語雙拼輸入方案。
+    本方案適合在PC, Android端使用。兩鍵內輸入。反向鍵入可輸入入聲字。
+    採用1993年香港語言學學會粵語拼音方案   https://www.lshk.org/jyutping
+    「jyut6ping3」項目主頁 https://github.com/rime/rime-cantonese
+    「soengping」項目主頁 https://github.com/Over-There-Is/rime-soengping/
+    「jyutsp」項目主頁 https://github.com/MrCorn0-0/jyutsp
+    「sanping」本項目主頁 https://github.com/Noroki/sanping
+  
+  dependencies:
+    - jyut6ping3
+    - double_pinyin_sg
+    - stroke
+
+switches:
+  - name: ascii_mode
+#    reset: 1
+    states: [ 中文, 西文 ]
+  - name: full_shape
+    states: [ 半角, 全角 ]
+  - options: [ noop, simp_cn, trad_hk, trad_tw ]
+#    reset: 0
+    states: [ 不轉換, 大陆简体, 香港繁體, 臺灣正體 ]
+#  - name: simplification
+#    states: [ 漢字, 汉字 ]
+  - name: ascii_punct
+    states: [ 。，, ．， ]
+  - name: emoji_suggestion
+#    reset: 1
+    states: [ "🈚️️\uFE0E", "🈶️️\uFE0F" ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - affix_segmentor@jyut6ping3
+    - affix_segmentor@double_pinyin_sg
+    - affix_segmentor@stroke
+    - affix_segmentor@kanji
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+    - script_translator@jyut6ping3
+    - script_translator@double_pinyin_sg
+    - table_translator@stroke
+    - table_translator@custom_phrase
+    - script_translator@kanji
+    - reverse_lookup_translator
+  filters:
+    - simplifier@simp_cn
+    - simplifier@trad_tw
+    - simplifier@trad_hk
+    - simplifier@emoji_suggestion
+    - uniquifier
+    - reverse_lookup_filter@reverse_lookup
+
+speller:
+  alphabet: zyxwvutsrqponmlkjihgfedcba;
+#  initials: qwertyuiopasdfghjklzxcbnm
+  delimiter: " '" 
+  algebra:
+    - xform/([123456])//         # 忽略声调
+    # - derive/^ng$/m/  
+
+
+    - xform/^([bpmfdtnlgkhzcsjw])(ok|ot|oek|eot|oet)/E$1/ # 入聲
+    - xform/^(gw|kw)(ok|ot|oek|eot|oet)/E$1/
+    - xform/^ng(ok|ot|oek|eot|oet)/ER/
+    - xform/^(ok|ot|oek|eot|oet)$/EO/
+
+    - xform/^([bpmfdtnlgkhzcsjw])(at|aat)/A$1/ # 入聲
+    - xform/^(gw|kw)(at|aat)/A$1/
+    - xform/^ng(at|aat)/AR/
+    - xform/^(at|aat)$/AO/
+
+    - xform/^([bpmfdtnlgkhzcsjw])(uk|ut|yut)/U$1/ # 入聲
+    - xform/^(gw|kw)(uk|ut|yut)/U$1/
+    - xform/^ng(uk|ut|yut)/UR/
+    - xform/^(uk|ut|yut)$/UO/
+
+    - xform/^([bpmfdtnlgkhzcsjw])(ik|ek)/;$1/ # 入聲 TESTING
+    - xform/^(gw|kw)(uk|ik|ek)/;$1/
+    - xform/^ng(uk|ik|ek)/;R/
+    - xform/^(uk|ik|ek)$/;O/
+
+    - xform/^([bpmfdtnlgkhzcsjw])(aak|ak)/I$1/ # 入聲
+    - xform/^(gw|kw)(aak|ak)/I$1/
+    - xform/^ng(aak|ak)/IR/
+    - xform/^(aak|ak)$/IO/
+
+    - xform/^([bpmfdtnlgkhzcsjw])(ap|aap)/X$1/ # 入聲
+    - xform/^(gw|kw)(ap|aap)/X$1/
+    - xform/^ng(ap|aap)/XR/
+    - xform/^(ap|aap)$/XO/
+
+    - xform/^([bpmfdtnlgkhzcsjw])(ip|it|ep)/Y$1/ # 入聲
+    - xform/^(gw|kw)(ip|it|ep)/Y$1/
+    - xform/^ng(ip|it|ep)/YR/
+    - xform/^(ip|it|ep)$/YO/
+
+
+    - xform/gw$/X/
+    - xform/kw$/Q/
+
+    - xform/^([aeiou])/O$1/    #重要，實現聲母單獨輸入功能。零声母设定，非derive
+
+    - xform/^kw/Q/
+    - xform/^ku([itk]?)$/Qu$1/
+    - derive/^Qu$/KU/
+    - xform/iu$/Q/
+    - xform/eu$/Q/     
+
+    - xform/ong$/W/
+
+    - xform/oe$/E/      # 增加 ;表示精選
+
+    - xform/yun$/R/
+  #  - xform/un$/R/
+    - xform/un$/P/
+
+    - xform/^jyu$/JT/
+    - xform/yu$/T/
+
+
+
+    - xform/ou$/U/
+
+    - xform/eon$/P/    # TESTING
+#    - xform/eon$/F/
+   # - xform/eon$/Z/ #TESTING
+   # - xform/on$/P/      # 增加 ;表示精選
+    - xform/on$/R/ # TESTING
+
+    - xform/ung$/S/
+
+    - xform/oeng$/D/ 
+
+    - xform/aang$/H/  # 增加 ;表示精選    
+
+    - xform/ang/G/    # 增加 ;表示精選
+
+    - xform/aan$/J/
+    
+    - xform/an$/F/
+
+    - xform/aau/K/    # 增加 ;表示精選
+
+    - xform/aai/L/ 
+
+    - xform/ing/;/
+    - xform/eng/;/    # 增加 ;表示精選
+
+    - xform/ei/I/
+    # - derive/Z$/I/ # TESTING
+    - xform/ui$/V/
+    - xform/eoi$/T/
+    - xform/oi$/V/
+
+    - xform/aam$/X/
+    - xform/am$/C/
+
+    # - xform/eoi$/V/
+    # - xform/ui$/V/
+    # - xform/oi$/V/
+    - xform/^gw/V/
+
+    - xform/au$/B/
+    - xform/ai$/Z/
+
+    - xform/in$/N/
+
+    - xform/im$/M/
+    - xform/em$/M/
+
+    - xform/aa$/A/ 
+    - xform/a$/A/    # 增加 ;表示精選
+
+    - xform/^ng/R/
+    
+        # TESTING
+    #- derive/^X(\w)/$1X;/
+    #- derive/^U(\w)/$1U;/
+   # - derive/^E(\w)/$1E;/
+   # - derive/^;(\w)/$1;;/
+  #  - derive/^I(\w)/$1I;/
+#    - derive/^Y(\w)/$1Y;/
+  #  - derive/^A(\w)/$1A;/
+
+    - xform/(.*)ng$/$1R/ # r
+    - derive/;/Y/ # compatible with iRime
+    - xlit/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
+    #- derive/^([a-z|;]{2});/$1/
+    - xform/^(m|r)$/$1$1/        #mm->[m], rr->[ng].
+    - abbrev/^([a-z|;]{3}).+$/$1/         # 2字词首字母簡拼
+
+translator:
+  dictionary: jyut6ping3
+  prism: sanping
+  spelling_hints: 9
+  enable_user_dict: true
+#  enable_completion:false
+  enable_sentence: true
+  initial_quality: 0.75
+#  strict_spelling: false
+  preedit_format:
+    - xform/(^|[ '])mm/$1M/
+    - xform/(^|[ '])rr/$1NG/    
+    - xform/(^|[ '])(\w)q;/$1$2AK/ # q
+    - xform/(^|[ '])([exrw])q/$1$2/ # q
+    - xform/(^|[ '])([bpmdtnlgkhzjcusiy])q/$1$2IU/ # q
+    - xform/(^|[ '])([bpmdtnlgkhzjcusiy])q/$1$2EU/ # q
+
+    - xlit/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
+
+custom_phrase: #這是一個table_translator
+  dictionary: ""
+  user_dict: custom_phrase
+  db_class: tabledb
+  enable_sentence: false
+  enable_completion: false
+  initial_quality: 1
+  
+double_pinyin_sg:
+  tag: double_pinyin_sg
+  dictionary: luna_pinyin
+  enable_user_dict: false
+  prism: double_pinyin_sg
+  prefix: "`"
+  suffix: "'"
+  tips: 〔雙拼〕
+  preedit_format:
+    - erase/^xx$/
+    - xform/^sh/U/
+    - xform/^ch/I/
+    - xform/^zh/V/
+    - derive/^([jqxy])u$/$1v/
+    - derive/^([aoe])([ioun])$/$1$1$2/
+    - xform/^([aoe])(ng)?$/$1$1$2/
+    - xform/(\w)iu$/$1Q/
+    - xform/(\w)[iu]a$/$1W/
+    - xform/(\w)[uv]an$/$1R/
+    - xform/(\w)[uv]e$/$1T/
+    - xform/(\w)uai$/$1Y/
+    - xform/(\w)ing$/$1;/
+    - xform/(\w)uo$/$1O/
+    - xform/(\w)[uv]n$/P/
+    - xform/(\w)i?ong$/$1S/
+    - xform/(\w)[iu]ang$/D/
+    - xform/(?!e)en$/$1F/
+    - xform/(?!e)eng$/$1G/
+    - xform/(?!a)ang$/$1H/
+    - xform/(\w)ian$/M/
+    - xform/(?!a)an$/$1J/
+    - xform/(\w)iao$/$1C/
+    - xform/(?!a)ao$/$1K/
+    - xform/(?!a)ai$/$1L/
+    - xform/(?!e)ei$/$1Z/
+    - xform/(\w)ie$/$1X/
+    - xform/(\w)ui$/$1V/
+    - xform/(?!o)ou$/$1B/
+    - xform/(\w)in$/$1N/
+    - xlit/QWRTYUIOPSDFGHMJCKLZXVBN/qwrtyuiopsdfghmjcklzxvbn/
+    
+jyut6ping3:
+  tag: jyut6ping3
+  dictionary: jyut6ping3
+  prefix: "`Q"
+  suffix: ;
+  preedit_format:
+    - xform/([aeioumngptk])vv/$1⁴/
+    - xform/([aeioumngptk])xx/$1⁵/
+    - xform/([aeioumngptk])qq/$1⁶/
+    - xform/([aeioumngptk])v/$1¹/
+    - xform/([aeioumngptk])x/$1²/
+    - xform/([aeioumngptk])q/$1³/
+  tips: 〔粤拼〕
+  closing_tips: 〔粵語雙拼〕
+
+stroke:
+  tag: stroke
+  dictionary: stroke
+  enable_user_dict: false
+  prefix: "`X"
+  suffix: ";"
+  tips: 〔筆畫〕
+  preedit_format:
+    - xlit/hspnz/一丨丿丶乙/
+    
+kanji:
+  tag: kanji
+  prefix: "`N"  # 獨用jyutping_lookup反查在反查鍵「`」之後再鍵入〔大寫〕「J」
+  suffix: "`"
+  dictionary: "nihongo-hybrid"
+  preedit_format:
+    - 'xlit|q|ー|'
+    - 'derive/i_e/ye/'
+    - derive/shi/si/
+    - derive/sy([auo])/sh$1/
+    - derive/zi/ji/
+    - derive/zy([auo])/j$1/
+    - derive/tsu/tu/
+    - derive/chi/ti/
+    - derive/ty([auo])/ch$1/
+    - derive/fu/hu/
+  tips: 【日本語】
+    
+reverse_lookup: #這部分更新至real雙拼
+  tags: [double_pinyin_sg, jyut6ping3, stroke]
+  dictionary: jyutsp_nospaces   #這個非常重要，本來是jyut6ping3，然後這個其實需要先將nospaces嘅輸入法佈署下，生成reverse build table。
+#  prism: double_pinyin_sg
+  enable_completion: true
+  prefix: "`"
+  suffix: "'"
+  tips: 〔反查〕
+  overwrite_comment: false
+  comment_format:
+    - xform/(^| )([a-z1-6]+)/$1\U$2\E（$2）/         # copy
+    - xform/（([a-z]+)[123456]）/（$1）/         # 忽略声调
+    - xform/(（|[1-6])([aeiou])/$1E$2/    #零声母设定，非derive
+    - xform/yun/R/
+    - xform/yut/D;/  # 增加 ;表示精選
+    - xform/jyu/YU/
+    - xform/yu/Y/
+    - xform/j/Y/
+    - xform/kw/Q/
+    - xform/gw/X/
+    - xform/ku([itk]?$)/Qu$1/
+    - xform/gu([ink]?$)/Xu$1/
+    - xform/iu/Q/
+    - xform/eu/Q/      
+    - xform/un/R/      
+    - xform/oeng/T/      
+    - xform/ut/T/
+    - xform/ou/U/
+    - xform/eot/O;/    # 增加 ;表示精選
+    - xform/oet/O;/    # 增加 ;表示精選
+    - xform/ong/W/
+    - xform/ot/W;/    # 增加 ;表示精選
+    - xform/it/I;/    # 增加 ;表示精選
+    - xform/et/I;/    # 增加 ;表示精選
+    - xform/ok/P/
+    - xform/eon/P;/    # 增加 ;表示精選
+    - xform/ung/S/
+    - xform/uk/D/
+    - xform/aap/V;/    # 增加 ;表示精選
+    - xform/aai/V/ 
+    - xform/aam/H/
+    - xform/aak/H;/    # 增加 ;表示精選
+    - xform/ak/Q;/    # 增加 ;表示精選
+    - xform/aang/J;/  # 增加 ;表示精選
+    - xform/aan/J/
+    - xform/aau/N;/    # 增加 ;表示精選
+    - xform/ang/G;/    # 增加 ;表示精選
+    - xform/an/F/
+    - xform/am/G/
+    - xform/ai/L/
+    - xform/aat/C;/    # 增加 ;表示精選
+    - xform/at/C/
+    - xform/au/B/
+    - xform/ap/M;/    # 增加 ;表示精選
+    - xform/aa/A/ 
+    - xform/a/A;/    # 增加 ;表示精選
+    - xform/ik/K/
+    - xform/oek/K;/    # 增加 ;表示精選
+    - xform/ek/K;/    # 增加 ;表示精選
+    - xform/ing/;/
+    - xform/eng/;;/    # 增加 ;表示精選
+    - xform/ei/Z/
+    - xform/ip/Z;/    # 增加 ;表示精選
+    - xform/ep/Z;/    # 增加 ;表示精選
+    - xform/eoi/X/
+    - xform/ui/X/    
+    - xform/(oe|eo)/T/
+    - xform/in/N/
+    - xform/im/M/
+    - xform/em/M/
+    - xform/oi/Y;/    # 增加 ;表示精選
+    - xform/on/E/      # 增加 ;表示精選
+    - xform/ng/R/
+    - xlit/ABCDEFGHIJKLMNOPQRSTUVWXYZ（）/abcdefghijklmnopqrstuvwxyz()/
+
+#simplifier:
+#  option_name: simplification
+
+key_binder:
+  import_preset: default
+  bindings:
+    - {accept: "Control+Shift+f", toggle: simp_cn, when: always}
+    - {accept: "Control+Shift+F", toggle: simp_cn, when: always}
+#    - {accept: "Control+Shift+t", toggle: zh_tw, when: always}
+#    - {accept: "Control+Shift+T", toggle: zh_tw, when: always}
+    
+simp_cn:
+  option_name: simp_cn
+  opencc_config: t2s.json    
+  
+trad_tw:
+  option_name: trad_tw
+  opencc_config: t2tw.json
+
+trad_hk:
+  option_name: trad_hk
+  opencc_config: t2hk.json
+  
+emoji_suggestion:
+  opencc_config: emoji.json
+  option_name: emoji_suggestion
+  tips: all
+
+punctuator:
+  import_preset: default
+
+#key_binder:
+#  import_preset: default
+
+recognizer:
+  import_preset: default
+  patterns:
+#    punct: "^/([0-9]0?|[a-z]+)$"   #這裏/-->|
+    double_pinyin_sg: "`[a-z|;]*'?$"
+#    reverse_lookup: "`[a-z|;]*'?$"
+    jyut6ping3: "`Q[a-z|;]*'?$"
+    stroke: "`X[hspnz]*'?$"
+    kanji: "`N[a-z]*?$"
+
+style:
+  keyboards:
+    - double_pinin
+    # - terra_pinyin
+ #   - qwerty_
+    - number
+    - symbols
